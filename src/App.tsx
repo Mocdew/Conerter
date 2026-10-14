@@ -1,7 +1,7 @@
 // WP-3 — Layout, state, theme wiring. Pulls together the engine (WP-2),
 // sanitize (WP-6), styling (WP-5) and file I/O / export (WP-4).
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Toolbar from './components/Toolbar';
 import Editor from './components/Editor';
 import Preview from './components/Preview';
@@ -21,7 +21,9 @@ import hljsDark from 'highlight.js/styles/github-dark.css?raw';
 export default function App() {
   const [theme, setTheme] = useLocalStorage<Theme>('theme', 'light');
   const [showToc, setShowToc] = useLocalStorage<boolean>('showToc', false);
-  const [markdown, setMarkdown] = useLocalStorage<string>('markdown', SAMPLE);
+  // The document is actively edited, so it must NOT adopt other tabs' writes
+  // mid-edit (that would silently discard unsaved local changes).
+  const [markdown, setMarkdown] = useLocalStorage<string>('markdown', SAMPLE, { sync: false });
   const [editorPct, setEditorPct] = useLocalStorage<number>('editorPct', 50);
   const [title, setTitle] = useState('document');
 
@@ -42,13 +44,24 @@ export default function App() {
     el.textContent = theme === 'dark' ? hljsDark : hljsLight;
   }, [theme]);
 
-  const html = useMemo(() => {
-    const src =
-      showToc && !/^\s*\[\[toc\]\]/im.test(debounced) ? `[[toc]]\n\n${debounced}` : debounced;
-    return sanitize(render(src));
-  }, [debounced, showToc]);
+  // Single conversion path shared by the live preview and the export/copy
+  // actions, so both reflect the same content. Only inject a [[toc]] marker when
+  // the toggle is on AND there is real content (otherwise an empty document would
+  // render a stray, empty TOC box instead of the empty state).
+  const toHtml = useCallback(
+    (source: string): string => {
+      const src =
+        showToc && source.trim() && !/^\s*\[\[toc\]\]/im.test(source)
+          ? `[[toc]]\n\n${source}`
+          : source;
+      return sanitize(render(src));
+    },
+    [showToc],
+  );
 
-  const stats = useMemo(() => getStats(markdown), [markdown]);
+  const html = useMemo(() => toHtml(debounced), [toHtml, debounced]);
+
+  const stats = useMemo(() => getStats(debounced), [debounced]);
 
   function loadFile(text: string, filename: string) {
     setMarkdown(text);
@@ -63,8 +76,10 @@ export default function App() {
     }
   }
 
+  // Export/copy render from the live `markdown`, not the debounced preview HTML,
+  // so output never lags behind the user's most recent edits.
   function onDownload() {
-    const doc = buildStandaloneHtml(html, { title, theme });
+    const doc = buildStandaloneHtml(toHtml(markdown), { title, theme });
     downloadHtml(doc, `${title}.html`);
   }
 
@@ -75,8 +90,8 @@ export default function App() {
         showToc={showToc}
         onUpload={loadFile}
         onDownload={onDownload}
-        onCopyHtml={() => copy(html, 'the HTML')}
-        onCopyDoc={() => copy(buildStandaloneHtml(html, { title, theme }), 'the document')}
+        onCopyHtml={() => copy(toHtml(markdown), 'the HTML')}
+        onCopyDoc={() => copy(buildStandaloneHtml(toHtml(markdown), { title, theme }), 'the document')}
         onPrint={() => window.print()}
         onSetTheme={setTheme}
         onToggleToc={() => setShowToc(!showToc)}

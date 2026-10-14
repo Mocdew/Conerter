@@ -30,6 +30,9 @@ export default function Splitter({ containerRef, value, onResize }: SplitterProp
     e.preventDefault();
     activePointer.current = e.pointerId;
     e.currentTarget.setPointerCapture(e.pointerId);
+    // preventDefault() suppresses the focus that a click would normally give the
+    // separator, so focus it explicitly to keep the keyboard affordance usable.
+    e.currentTarget.focus();
     setDragging(true);
   }
 

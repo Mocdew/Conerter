@@ -9,12 +9,23 @@ import katexCss from 'katex/dist/katex.min.css?raw';
 
 export type Theme = 'light' | 'dark';
 
+/** Escape the five characters that are unsafe in HTML text/attribute context. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /** Wrap sanitized body HTML in a complete, offline-ready HTML document. */
 export function buildStandaloneHtml(
   bodyHtml: string,
   opts: { title?: string; theme?: Theme } = {},
 ): string {
-  const title = (opts.title || 'Document').replace(/[<>&]/g, '');
+  // Escape (don't strip) so titles like "Tom & Jerry" or "a<b" survive intact.
+  const title = escapeHtml(opts.title || 'Document');
   const theme: Theme = opts.theme === 'dark' ? 'dark' : 'light';
   const hljsTheme = theme === 'dark' ? hljsDark : hljsLight;
 

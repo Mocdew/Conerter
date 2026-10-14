@@ -7,14 +7,20 @@ import { useCallback, useEffect, useState } from 'react';
  * - Writes back on every change.
  * - Tolerates private-mode / blocked storage: every access is wrapped in try/catch,
  *   so the hook degrades to plain in-memory state instead of throwing.
- * - Syncs across tabs via the `storage` event.
+ * - Syncs across tabs via the `storage` event, unless `sync: false` is passed.
+ *
+ * Cross-tab sync is right for small settings (theme, layout), but harmful for a
+ * value the user is actively editing: adopting another tab's write mid-edit would
+ * silently discard local, unsaved changes. Such keys opt out with `sync: false`.
  *
  * Used by WP-5 to persist the light/dark theme toggle (see `app.css`).
  */
 export function useLocalStorage<T>(
   key: string,
   initialValue: T,
+  options: { sync?: boolean } = {},
 ): [T, (value: T | ((prev: T) => T)) => void] {
+  const { sync = true } = options;
   const readValue = useCallback((): T => {
     if (typeof window === 'undefined') return initialValue;
     try {
@@ -42,8 +48,9 @@ export function useLocalStorage<T>(
     [key],
   );
 
-  // Keep multiple tabs in sync.
+  // Keep multiple tabs in sync (opt-out for actively-edited values).
   useEffect(() => {
+    if (!sync) return;
     const onStorage = (e: StorageEvent) => {
       if (e.key !== key) return;
       try {
@@ -54,7 +61,7 @@ export function useLocalStorage<T>(
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, [key, initialValue]);
+  }, [key, initialValue, sync]);
 
   return [storedValue, setValue];
 }
