@@ -1,0 +1,295 @@
+/* =========================================================================
+   WP-5 — GitHub-style preview theme for rendered Markdown.
+
+   Scope: everything lives under `.markdown-body`, the wrapper WP-3 renders the
+   sanitized HTML into and WP-4 reuses in the standalone export.
+
+   SELF-CONTAINED BY DESIGN
+   ------------------------
+   WP-4 inlines THIS file into the exported .html, where none of app.css exists.
+   So the theme tokens below are declared on `.markdown-body` itself (not shared
+   with app.css) and dark mode is resolved two ways:
+     1. an explicit `data-theme="dark"` on any ancestor (app + export), and
+     2. the OS preference when no explicit light choice is set.
+   Thus the preview matches the app, and an exported file themes itself whether
+   or not WP-4 stamps a data-theme on <html>.
+
+   Token colors inside fenced code (`.hljs`) are owned by the highlight.js theme
+   CSS that WP-2/WP-4 load separately; this file only sizes/pads the code block
+   so the two never fight over colors.
+   ========================================================================= */
+
+.markdown-body {
+  --md-fg: #1f2328;
+  --md-muted: #656d76;
+  --md-border: #d0d7de;
+  --md-border-muted: #d8dee4;
+  --md-bg: #ffffff;
+  --md-bg-inset: #f6f8fa;
+  --md-accent: #0969da;
+  --md-code-bg: rgba(129, 139, 152, 0.12);
+  --md-quote-fg: #656d76;
+  --md-table-stripe: #f6f8fa;
+
+  color: var(--md-fg);
+  background: var(--md-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+[data-theme='dark'] .markdown-body {
+  --md-fg: #e6edf3;
+  --md-muted: #8b949e;
+  --md-border: #30363d;
+  --md-border-muted: #21262d;
+  --md-bg: #0d1117;
+  --md-bg-inset: #161b22;
+  --md-accent: #2f81f7;
+  --md-code-bg: rgba(110, 118, 129, 0.4);
+  --md-quote-fg: #8b949e;
+  --md-table-stripe: #161b22;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .markdown-body {
+    --md-fg: #e6edf3;
+    --md-muted: #8b949e;
+    --md-border: #30363d;
+    --md-border-muted: #21262d;
+    --md-bg: #0d1117;
+    --md-bg-inset: #161b22;
+    --md-accent: #2f81f7;
+    --md-code-bg: rgba(110, 118, 129, 0.4);
+    --md-quote-fg: #8b949e;
+    --md-table-stripe: #161b22;
+  }
+}
+
+/* ---- Block flow --------------------------------------------------------- */
+.markdown-body > *:first-child {
+  margin-top: 0 !important;
+}
+.markdown-body > *:last-child {
+  margin-bottom: 0 !important;
+}
+.markdown-body p,
+.markdown-body blockquote,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body dl,
+.markdown-body table,
+.markdown-body pre,
+.markdown-body details {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* ---- Headings ----------------------------------------------------------- */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: 24px 0 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.markdown-body h1 {
+  font-size: 2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--md-border-muted);
+}
+.markdown-body h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--md-border-muted);
+}
+.markdown-body h3 {
+  font-size: 1.25em;
+}
+.markdown-body h4 {
+  font-size: 1em;
+}
+.markdown-body h5 {
+  font-size: 0.875em;
+}
+.markdown-body h6 {
+  font-size: 0.85em;
+  color: var(--md-muted);
+}
+
+/* Anchor links injected by markdown-it-anchor (WP-2). */
+.markdown-body .header-anchor {
+  float: left;
+  margin-left: -0.9em;
+  padding-right: 0.3em;
+  color: var(--md-muted);
+  text-decoration: none;
+  opacity: 0;
+}
+.markdown-body h1:hover .header-anchor,
+.markdown-body h2:hover .header-anchor,
+.markdown-body h3:hover .header-anchor,
+.markdown-body h4:hover .header-anchor,
+.markdown-body h5:hover .header-anchor,
+.markdown-body h6:hover .header-anchor {
+  opacity: 1;
+}
+
+/* ---- Inline ------------------------------------------------------------- */
+.markdown-body a {
+  color: var(--md-accent);
+  text-decoration: none;
+}
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+.markdown-body strong {
+  font-weight: 600;
+}
+.markdown-body hr {
+  height: 0.25em;
+  margin: 24px 0;
+  border: 0;
+  background: var(--md-border);
+}
+
+/* ---- Lists -------------------------------------------------------------- */
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 2em;
+}
+.markdown-body li + li {
+  margin-top: 0.25em;
+}
+.markdown-body li > p {
+  margin-top: 16px;
+}
+
+/* GFM task lists (markdown-it-task-lists, WP-2). */
+.markdown-body ul.contains-task-list,
+.markdown-body .task-list-item {
+  list-style: none;
+}
+.markdown-body ul.contains-task-list {
+  padding-left: 1.2em;
+}
+.markdown-body .task-list-item input[type='checkbox'] {
+  margin: 0 0.5em 0.2em -1.4em;
+  vertical-align: middle;
+}
+
+/* ---- Blockquote --------------------------------------------------------- */
+.markdown-body blockquote {
+  padding: 0 1em;
+  color: var(--md-quote-fg);
+  border-left: 0.25em solid var(--md-border);
+}
+.markdown-body blockquote > :first-child {
+  margin-top: 0;
+}
+.markdown-body blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---- Code --------------------------------------------------------------- */
+.markdown-body code,
+.markdown-body kbd,
+.markdown-body pre,
+.markdown-body samp {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+    monospace;
+  font-size: 85%;
+}
+/* Inline code */
+.markdown-body :not(pre) > code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  background: var(--md-code-bg);
+  border-radius: 6px;
+  white-space: break-spaces;
+}
+/* Fenced block: we own the frame; highlight.js owns the token colors. */
+.markdown-body pre {
+  padding: 16px;
+  overflow: auto;
+  line-height: 1.45;
+  background: var(--md-bg-inset);
+  border-radius: 6px;
+}
+.markdown-body pre > code {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  white-space: pre;
+  word-break: normal;
+}
+/* highlight.js sets its own background on .hljs; let it win inside the frame. */
+.markdown-body pre code.hljs {
+  padding: 0;
+  background: transparent;
+}
+
+/* ---- Tables (GFM) ------------------------------------------------------- */
+.markdown-body table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  border-collapse: collapse;
+}
+.markdown-body th,
+.markdown-body td {
+  padding: 6px 13px;
+  border: 1px solid var(--md-border);
+}
+.markdown-body th {
+  font-weight: 600;
+}
+.markdown-body tr {
+  background: var(--md-bg);
+  border-top: 1px solid var(--md-border);
+}
+.markdown-body tr:nth-child(2n) {
+  background: var(--md-table-stripe);
+}
+
+/* ---- Media -------------------------------------------------------------- */
+.markdown-body img {
+  max-width: 100%;
+  box-sizing: border-box;
+  background: var(--md-bg);
+}
+
+/* ---- Table of contents (markdown-it-table-of-contents, WP-2) ------------ */
+.markdown-body .table-of-contents {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  background: var(--md-bg-inset);
+  border: 1px solid var(--md-border);
+  border-radius: 6px;
+}
+.markdown-body .table-of-contents ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+.markdown-body .table-of-contents > ul {
+  padding-left: 0;
+  list-style: none;
+}
+
+/* ---- Math (KaTeX, WP-2) ------------------------------------------------- */
+/* KaTeX ships its own CSS (inlined by WP-4); just give block math room. */
+.markdown-body .katex-display {
+  margin: 16px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

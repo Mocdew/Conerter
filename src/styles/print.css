@@ -1,0 +1,123 @@
+/* =========================================================================
+   WP-5 — Print / Save-as-PDF stylesheet.
+
+   Goal (per plan): the print preview shows ONLY the rendered document — no
+   toolbar, no editor, no pane chrome — on a clean light page regardless of the
+   on-screen theme.
+
+   Imported by the app (WP-3) so it applies when the user hits Print from the
+   toolbar (WP-4). The standalone export (WP-4) inlines an equivalent block so a
+   saved .html prints the same way when opened directly.
+   ========================================================================= */
+
+@media print {
+  /* Always print on a light page, even in dark mode. */
+  :root,
+  :root[data-theme='dark'] {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root,
+  .app {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  /* Hide everything that is not the rendered document. */
+  .toolbar,
+  .pane--editor,
+  .dropzone,
+  .editor,
+  .pane__label,
+  .empty-state {
+    display: none !important;
+  }
+
+  /* Let the preview pane flow as a normal, full-width document. */
+  .panes {
+    display: block !important;
+    background: #ffffff !important;
+    gap: 0 !important;
+  }
+  .pane,
+  .pane--preview,
+  .preview {
+    display: block !important;
+    flex: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Force the markdown theme to its light tokens for print. */
+  .markdown-body {
+    --md-fg: #1f2328;
+    --md-muted: #656d76;
+    --md-border: #d0d7de;
+    --md-border-muted: #d8dee4;
+    --md-bg: #ffffff;
+    --md-bg-inset: #f6f8fa;
+    --md-accent: #0550ae;
+    --md-code-bg: rgba(129, 139, 152, 0.12);
+    --md-quote-fg: #4b535d;
+    --md-table-stripe: #f6f8fa;
+
+    max-width: none !important;
+    margin: 0 !important;
+    font-size: 11pt;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Make hidden heading anchors never print. */
+  .markdown-body .header-anchor {
+    display: none !important;
+  }
+
+  /* Print links as plain text, print URLs for external links. */
+  .markdown-body a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+  .markdown-body a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    color: #333;
+    word-break: break-all;
+  }
+
+  /* Keep code, tables and media readable and un-split where possible. */
+  .markdown-body pre,
+  .markdown-body blockquote,
+  .markdown-body table,
+  .markdown-body img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .markdown-body pre,
+  .markdown-body code {
+    background: #f6f8fa !important;
+    color: #000 !important;
+    border: 1px solid #d0d7de;
+  }
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .markdown-body img {
+    max-width: 100% !important;
+  }
+
+  @page {
+    margin: 18mm 16mm;
+  }
+}

@@ -1,0 +1,360 @@
+/* =========================================================================
+   WP-5 — App shell, theme tokens, responsive two-pane layout, empty state.
+
+   THEMING MODEL
+   -------------
+   The active theme is selected by a `data-theme` attribute on <html>
+   (`document.documentElement`). WP-3 sets it from the persisted value in
+   `useLocalStorage` ('light' | 'dark'). When the attribute is absent we
+   follow the OS via prefers-color-scheme, so first paint is sensible before
+   JS runs.
+
+       <html data-theme="dark">  ->  dark
+       <html data-theme="light"> ->  light
+       <html>                    ->  follow OS
+
+   CLASS-NAME CONTRACT (shared with WP-3 / WP-4)
+   ---------------------------------------------
+     .app                     app root (flex column, full viewport)
+     .toolbar                 top bar
+       .toolbar__group        left/right cluster
+       .toolbar__btn          button  (+ .is-active for toggles)
+       .toolbar__spacer       flex spacer pushing groups apart
+       .toolbar__stats        word / char / reading-time readout
+     .panes                   two-pane body (flex row; stacks when narrow)
+       .pane                    one column
+       .pane--editor / .pane--preview
+       .pane__label           small heading above a pane (optional)
+     .editor                  the Markdown <textarea>
+     .preview                 scroll container for rendered HTML
+       .markdown-body         rendered-HTML wrapper  (styled by github-markdown.css)
+     .dropzone                drag-and-drop surface (wraps the editor)
+       .is-dragover           added while a file is dragged over
+       .dropzone__overlay     centered hint shown during drag
+     .empty-state             shown when there is no content
+   ========================================================================= */
+
+/* ---- Theme tokens ------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --bg-elevated: #f6f8fa;
+  --bg-inset: #f0f2f5;
+  --fg: #1f2328;
+  --fg-muted: #656d76;
+  --border: #d0d7de;
+  --border-strong: #afb8c1;
+  --accent: #0969da;
+  --accent-fg: #ffffff;
+  --danger: #cf222e;
+  --focus-ring: #0969da66;
+  --shadow: 0 1px 3px rgba(27, 31, 36, 0.12), 0 1px 2px rgba(27, 31, 36, 0.08);
+
+  --toolbar-h: 52px;
+  --radius: 6px;
+  --gap: 1px; /* hairline divider between panes */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+    monospace;
+}
+
+/* Dark tokens — applied explicitly, or via OS when no explicit light choice. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0d1117;
+  --bg-elevated: #161b22;
+  --bg-inset: #010409;
+  --fg: #e6edf3;
+  --fg-muted: #8b949e;
+  --border: #30363d;
+  --border-strong: #484f58;
+  --accent: #2f81f7;
+  --accent-fg: #ffffff;
+  --danger: #f85149;
+  --focus-ring: #1f6febcc;
+  --shadow: 0 1px 3px rgba(1, 4, 9, 0.6), 0 1px 2px rgba(1, 4, 9, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #0d1117;
+    --bg-elevated: #161b22;
+    --bg-inset: #010409;
+    --fg: #e6edf3;
+    --fg-muted: #8b949e;
+    --border: #30363d;
+    --border-strong: #484f58;
+    --accent: #2f81f7;
+    --accent-fg: #ffffff;
+    --danger: #f85149;
+    --focus-ring: #1f6febcc;
+    --shadow: 0 1px 3px rgba(1, 4, 9, 0.6), 0 1px 2px rgba(1, 4, 9, 0.5);
+  }
+}
+
+/* ---- Base --------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth the theme swap without animating first paint. */
+body,
+.toolbar,
+.editor,
+.preview,
+.pane {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* ---- App shell ---------------------------------------------------------- */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ---- Toolbar ------------------------------------------------------------ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: var(--toolbar-h);
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.toolbar__btn:hover {
+  background: var(--bg-inset);
+  border-color: var(--border-strong);
+}
+.toolbar__btn:active {
+  transform: translateY(1px);
+}
+.toolbar__btn.is-active {
+  color: var(--accent-fg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.toolbar__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar__stats {
+  display: flex;
+  gap: 14px;
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.toolbar__stats strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+:where(button, a, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+/* ---- Two-pane body ------------------------------------------------------ */
+.panes {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0; /* allow children to scroll instead of overflowing */
+  background: var(--border); /* shows through as the hairline divider */
+  gap: var(--gap);
+}
+
+.pane {
+  flex: 1 1 50%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg);
+}
+
+.pane__label {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---- Editor ------------------------------------------------------------- */
+.editor {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  padding: 16px 20px;
+  border: 0;
+  resize: none;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.6;
+  tab-size: 2;
+  overflow: auto;
+}
+.editor:focus {
+  outline: none;
+}
+.editor::placeholder {
+  color: var(--fg-muted);
+}
+
+/* ---- Preview ------------------------------------------------------------ */
+.preview {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px 28px;
+  background: var(--bg);
+}
+/* `.markdown-body` itself is themed in github-markdown.css */
+
+/* ---- Drag-and-drop ------------------------------------------------------ */
+.dropzone {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.dropzone.is-dragover .dropzone__overlay {
+  display: flex;
+}
+.dropzone__overlay {
+  display: none;
+  position: absolute;
+  inset: 8px;
+  z-index: 5;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  color: var(--accent);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+
+/* ---- Empty state -------------------------------------------------------- */
+.empty-state {
+  margin: auto;
+  max-width: 420px;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--fg-muted);
+}
+.empty-state h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--fg);
+}
+.empty-state p {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+/* ---- Responsive: stack panes on narrow screens -------------------------- */
+@media (max-width: 760px) {
+  .panes {
+    flex-direction: column;
+  }
+  .pane {
+    flex: 1 1 50%;
+  }
+  .toolbar__stats {
+    width: 100%;
+    order: 10;
+    gap: 10px;
+  }
+}
+
+/* Thin, theme-aware scrollbars. */
+.editor,
+.preview {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.editor::-webkit-scrollbar,
+.preview::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.editor::-webkit-scrollbar-thumb,
+.preview::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid var(--bg);
+  border-radius: 6px;
+}
