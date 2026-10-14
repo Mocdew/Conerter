@@ -1,67 +1,64 @@
-/**
- * WP-6 — Sanitization & security
- *
- * Single source of truth for turning the (untrusted) HTML produced by
- * `markdown-it` into HTML that is safe to inject into the DOM and to write into
- * the exported standalone document.
- *
- * It MUST be applied in two places:
- *   - WP-3 Preview, before `dangerouslySetInnerHTML`
- *   - WP-4 exportHtml, before the body is written into the downloadable file
- *
- * What we allow and why:
- *   - KaTeX renders math as a mix of positioned <span>s (inline `style`) plus a
- *     MathML fallback: <math>, <semantics>, <mrow>, <annotation encoding="…">, …
- *   - highlight.js wraps tokens in <span class="hljs-…">.
- *   - markdown-it plugins add heading `id`s/anchors, a TOC <nav>/<ul>, and
- *     disabled task-list <input type="checkbox">.
- *
- * What we strip: DOMPurify's defaults remove <script>, javascript:/data: script
- * URLs and all `on*` event-handler attributes (e.g. `onerror=`), which is the
- * core acceptance criterion for this work package.
- */
-
 import DOMPurify from 'dompurify';
 
 /**
- * DOMPurify configuration.
+ * WP-6 — Sanitization & security.
  *
- * The default allow-list already covers HTML + MathML + SVG and already strips
- * scripts and event handlers; we state the profiles explicitly and add only the
- * couple of attributes KaTeX's MathML output depends on. `class` and `style`
- * (needed by hljs/KaTeX/markdown-it-*) are permitted by DOMPurify by default.
+ * Single source of truth for turning the (untrusted) HTML string produced by the
+ * Markdown engine into markup that is safe to inject into the DOM. It is applied in
+ * exactly two places:
+ *   - before the live preview renders it (WP-3), and
+ *   - before it is written into the exported standalone document (WP-4).
+ *
+ * Because `markdown-it` runs with `html: true`, a document can contain arbitrary raw
+ * HTML — including `<script>`, event handlers and `javascript:` URLs. DOMPurify removes
+ * all of those while preserving the benign markup our features depend on:
+ *   - KaTeX  → MathML (`<math>`, `<semantics>`, `<annotation>`, …) plus styled `<span>`s,
+ *   - highlight.js → `<span class="hljs-*">`,
+ *   - GFM task lists → `<input type="checkbox" disabled checked>`,
+ *   - anchored headings → `id` + in-page `<a href="#…">` links.
+ *
+ * DOMPurify's defaults already allow the HTML, MathML and SVG namespaces and the
+ * `class`/`style`/`id` attributes these libraries emit, so we keep the default
+ * allow-lists and only make targeted, security-preserving adjustments below.
  */
-const CONFIG: DOMPurify.Config = {
-  USE_PROFILES: { html: true, mathMl: true, svg: true },
-  // KaTeX: <annotation encoding="application/x-tex">, <math display="block">.
-  ADD_ATTR: ['encoding', 'display'],
-};
 
-/**
- * Install hooks exactly once. Any link that opens a new tab gets
- * `rel="noopener noreferrer"` so the opened page cannot reach back through
- * `window.opener` — standard hardening for the autolinks markdown-it produces.
- */
+// Harden links that open a new browsing context: without rel="noopener" the opened
+// page can navigate ours via window.opener (reverse tabnabbing). DOMPurify strips
+// dangerous protocols on its own; this only tightens otherwise-legitimate links.
 let hooksInstalled = false;
 function installHooks(): void {
   if (hooksInstalled) return;
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-    if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+    if (
+      node instanceof Element &&
+      node.tagName === 'A' &&
+      node.getAttribute('target') === '_blank'
+    ) {
       node.setAttribute('rel', 'noopener noreferrer');
     }
   });
   hooksInstalled = true;
 }
 
+const CONFIG: DOMPurify.Config = {
+  // Allow anchors to declare a target (hardened by the hook above). Everything else
+  // we rely on (class, style, id, href, type/checked/disabled on checkbox inputs,
+  // MathML/SVG tags) is already permitted by DOMPurify's defaults.
+  ADD_ATTR: ['target'],
+  // We never need data-* attributes; dropping them shrinks the attack surface.
+  ALLOW_DATA_ATTR: false,
+  // Belt-and-braces: these are never part of rendered Markdown content and are the
+  // usual vectors for CSS-based and form-based exfiltration, so forbid them outright.
+  FORBID_TAGS: ['style', 'form', 'base'],
+  FORBID_ATTR: ['srcset', 'ping', 'formaction'],
+};
+
 /**
- * Sanitize a raw HTML string. Returns a string safe to render or export.
- *
- * @param dirtyHtml HTML produced by the markdown renderer (WP-2 `render`).
- * @returns sanitized HTML with scripts and event handlers removed.
+ * Sanitize an HTML string, stripping anything executable while keeping the markup
+ * emitted by markdown-it + KaTeX + highlight.js intact.
  */
 export function sanitize(dirtyHtml: string): string {
   installHooks();
-  // Default config returns a string (no RETURN_DOM / RETURN_TRUSTED_TYPE).
   return DOMPurify.sanitize(dirtyHtml, CONFIG) as string;
 }
 
