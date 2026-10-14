@@ -1,7 +1,7 @@
 // Bottom status strip: document stats + an auto-saved indicator.
 
 import type { Stats } from '../lib/stats';
-import { CheckIcon } from './icons';
+import { CheckIcon, LockIcon } from './icons';
 
 interface StatusBarProps {
   stats: Stats;
@@ -20,6 +20,14 @@ export default function StatusBar({ stats }: StatusBarProps) {
         <strong>{stats.readingTimeMin}</strong> min read
       </span>
       <span className="statusbar__spacer" />
+      <span
+        className="statusbar__trust"
+        title="Everything runs locally. Your files never leave your browser."
+      >
+        <LockIcon />
+        100% private — runs in your browser
+      </span>
+      <span className="statusbar__sep" aria-hidden="true" />
       <span className="statusbar__saved" title="Your document is saved in this browser">
         <CheckIcon />
         Saved locally

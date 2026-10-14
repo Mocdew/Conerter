@@ -288,15 +288,18 @@ body,
 
 .btn--primary {
   color: var(--accent-fg);
-  background: var(--accent);
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  box-shadow: var(--shadow-sm), 0 1px 0 rgba(255, 255, 255, 0.12) inset;
 }
 .btn--primary svg {
   opacity: 1;
 }
 .btn--primary:hover {
-  background: var(--accent-hover);
+  filter: brightness(1.07);
   color: var(--accent-fg);
+}
+.btn--primary:active {
+  filter: brightness(0.96);
 }
 
 .btn.is-active {
@@ -541,6 +544,24 @@ body,
   font-size: 13.5px;
   line-height: 1.6;
 }
+.empty-state__pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.empty-state__pills li {
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--fg-muted);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
 
 /* ---- Status bar --------------------------------------------------------- */
 .statusbar {
@@ -580,6 +601,25 @@ body,
   height: 13px;
 }
 
+/* Privacy / trust badge — the core marketing promise, always in view. */
+.statusbar__trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 550;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.statusbar__trust svg {
+  width: 13px;
+  height: 13px;
+}
+.statusbar__sep {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+}
+
 /* ---- Responsive: stack panes on narrow screens -------------------------- */
 @media (max-width: 760px) {
   .panes {
@@ -611,6 +651,11 @@ body,
     scrollbar-width: none;
   }
   .appbar__group::-webkit-scrollbar {
+    display: none;
+  }
+  /* Keep the status bar readable: drop the trust badge, keep the stats. */
+  .statusbar__trust,
+  .statusbar__sep {
     display: none;
   }
 }

@@ -7,6 +7,8 @@ interface PreviewProps {
   html: string;
 }
 
+const PILLS = ['Tables', 'Task lists', 'Code highlighting', 'Math', 'Export to HTML'];
+
 export default function Preview({ html }: PreviewProps) {
   return (
     <div className="preview">
@@ -21,8 +23,13 @@ export default function Preview({ html }: PreviewProps) {
           <div className="empty-state__icon">
             <EmptyIcon />
           </div>
-          <h2>Nothing to preview yet</h2>
-          <p>Start typing Markdown on the left, or drop a .md file to get going.</p>
+          <h2>Your preview appears here</h2>
+          <p>Start typing Markdown on the left, or drop a .md file — it renders instantly.</p>
+          <ul className="empty-state__pills">
+            {PILLS.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

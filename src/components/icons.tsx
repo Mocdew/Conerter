@@ -107,3 +107,16 @@ export const CheckIcon = ({ className }: IconProps) => (
     <path d="m20 6-11 11-5-5" />
   </svg>
 );
+
+export const LockIcon = ({ className }: IconProps) => (
+  <svg {...base} className={className}>
+    <rect x="4" y="11" width="16" height="9" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+);
+
+export const BoltIcon = ({ className }: IconProps) => (
+  <svg {...base} className={className}>
+    <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+  </svg>
+);
