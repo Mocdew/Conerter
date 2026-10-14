@@ -1,11 +1,20 @@
-// WP-3/WP-4 — Toolbar: upload, download, copy, print, theme + TOC toggles, stats.
+// App bar: brand, file actions (open, download, copy, print), TOC + theme toggles.
 
 import { useRef } from 'react';
-import type { Stats } from '../lib/stats';
 import type { Theme } from '../lib/exportHtml';
+import {
+  LogoIcon,
+  OpenIcon,
+  DownloadIcon,
+  CopyIcon,
+  DocIcon,
+  PrintIcon,
+  ListIcon,
+  SunIcon,
+  MoonIcon,
+} from './icons';
 
 interface ToolbarProps {
-  stats: Stats;
   theme: Theme;
   showToc: boolean;
   onUpload: (text: string, filename: string) => void;
@@ -13,14 +22,13 @@ interface ToolbarProps {
   onCopyHtml: () => void;
   onCopyDoc: () => void;
   onPrint: () => void;
-  onToggleTheme: () => void;
+  onSetTheme: (theme: Theme) => void;
   onToggleToc: () => void;
 }
 
 const MD_EXT = /\.(md|markdown|mdown|mkd|txt)$/i;
 
 export default function Toolbar({
-  stats,
   theme,
   showToc,
   onUpload,
@@ -28,7 +36,7 @@ export default function Toolbar({
   onCopyHtml,
   onCopyDoc,
   onPrint,
-  onToggleTheme,
+  onSetTheme,
   onToggleToc,
 }: ToolbarProps) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -42,61 +50,88 @@ export default function Toolbar({
   }
 
   return (
-    <header className="toolbar">
-      <div className="toolbar__group">
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".md,.markdown,.mdown,.mkd,.txt,text/markdown"
-          hidden
-          onChange={(e) => {
-            pickFile(e.target.files?.[0]);
-            e.target.value = '';
-          }}
-        />
-        <button className="toolbar__btn" onClick={() => fileRef.current?.click()}>
-          Open .md
+    <header className="appbar">
+      <div className="appbar__brand">
+        <span className="appbar__logo">
+          <LogoIcon />
+        </span>
+        <span>
+          Markdown <span className="appbar__sub">→ HTML</span>
+        </span>
+      </div>
+
+      <div className="appbar__sep" />
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".md,.markdown,.mdown,.mkd,.txt,text/markdown"
+        hidden
+        onChange={(e) => {
+          pickFile(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
+
+      <div className="appbar__group">
+        <button className="btn" onClick={() => fileRef.current?.click()} title="Open a Markdown file">
+          <OpenIcon />
+          Open
         </button>
-        <button className="toolbar__btn" onClick={onDownload}>
-          Download HTML
-        </button>
-        <button className="toolbar__btn" onClick={onCopyHtml}>
+        <button className="btn" onClick={onCopyHtml} title="Copy the rendered HTML to the clipboard">
+          <CopyIcon />
           Copy HTML
         </button>
-        <button className="toolbar__btn" onClick={onCopyDoc}>
-          Copy document
-        </button>
-        <button className="toolbar__btn" onClick={onPrint}>
-          Print / PDF
-        </button>
-      </div>
-
-      <div className="toolbar__spacer" />
-
-      <div className="toolbar__group">
         <button
-          className={`toolbar__btn${showToc ? ' is-active' : ''}`}
-          aria-pressed={showToc}
-          onClick={onToggleToc}
+          className="btn"
+          onClick={onCopyDoc}
+          title="Copy a full standalone HTML document"
         >
-          TOC
+          <DocIcon />
+          Copy doc
         </button>
-        <button className="toolbar__btn" onClick={onToggleTheme}>
-          {theme === 'dark' ? '☾ Dark' : '☀ Light'}
+        <button className="btn" onClick={onPrint} title="Print or save as PDF">
+          <PrintIcon />
+          Print
         </button>
       </div>
 
-      <div className="toolbar__stats">
-        <span>
-          <strong>{stats.words}</strong> words
-        </span>
-        <span>
-          <strong>{stats.chars}</strong> chars
-        </span>
-        <span>
-          <strong>{stats.readingTimeMin}</strong> min read
-        </span>
+      <div className="appbar__spacer" />
+
+      <button
+        className={`btn btn--icon${showToc ? ' is-active' : ''}`}
+        aria-pressed={showToc}
+        onClick={onToggleToc}
+        title="Toggle table of contents"
+      >
+        <ListIcon />
+      </button>
+
+      <div className="seg" role="group" aria-label="Theme">
+        <button
+          className={`seg__btn${theme === 'light' ? ' is-active' : ''}`}
+          aria-pressed={theme === 'light'}
+          onClick={() => onSetTheme('light')}
+          title="Light theme"
+        >
+          <SunIcon />
+          Light
+        </button>
+        <button
+          className={`seg__btn${theme === 'dark' ? ' is-active' : ''}`}
+          aria-pressed={theme === 'dark'}
+          onClick={() => onSetTheme('dark')}
+          title="Dark theme"
+        >
+          <MoonIcon />
+          Dark
+        </button>
       </div>
+
+      <button className="btn btn--primary" onClick={onDownload} title="Download as a standalone .html file">
+        <DownloadIcon />
+        Download
+      </button>
     </header>
   );
 }

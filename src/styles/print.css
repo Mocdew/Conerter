@@ -27,11 +27,13 @@
   }
 
   /* Hide everything that is not the rendered document. */
-  .toolbar,
+  .appbar,
+  .statusbar,
+  .splitter,
   .pane--editor,
   .dropzone,
   .editor,
-  .pane__label,
+  .pane__head,
   .empty-state {
     display: none !important;
   }
@@ -52,6 +54,9 @@
     height: auto !important;
     overflow: visible !important;
     padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     background: #ffffff !important;
   }
 

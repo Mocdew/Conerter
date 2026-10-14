@@ -2,6 +2,7 @@
 // via FileReader and reports the text (and filename) upward.
 
 import { useState, type DragEvent, type ReactNode } from 'react';
+import { UploadCloudIcon } from './icons';
 
 interface DropZoneProps {
   onFile: (text: string, filename: string) => void;
@@ -43,7 +44,10 @@ export default function DropZone({ onFile, onError, children }: DropZoneProps) {
       onDrop={onDrop}
     >
       {children}
-      <div className="dropzone__overlay">Drop your .md file to load it</div>
+      <div className="dropzone__overlay">
+        <UploadCloudIcon />
+        Drop your Markdown file to load it
+      </div>
     </div>
   );
 }

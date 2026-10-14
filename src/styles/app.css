@@ -1,5 +1,5 @@
 /* =========================================================================
-   WP-5 — App shell, theme tokens, responsive two-pane layout, empty state.
+   App shell — modern polished refresh.
 
    THEMING MODEL
    -------------
@@ -13,25 +13,33 @@
        <html data-theme="light"> ->  light
        <html>                    ->  follow OS
 
-   CLASS-NAME CONTRACT (shared with WP-3 / WP-4)
-   ---------------------------------------------
+   CLASS-NAME CONTRACT (shared with App / export / print)
+   ------------------------------------------------------
      .app                     app root (flex column, full viewport)
-     .toolbar                 top bar
-       .toolbar__group        left/right cluster
-       .toolbar__btn          button  (+ .is-active for toggles)
-       .toolbar__spacer       flex spacer pushing groups apart
-       .toolbar__stats        word / char / reading-time readout
+     .appbar                  top bar
+       .appbar__brand           logo mark + product name
+       .appbar__group           clustered buttons
+       .appbar__spacer          flex spacer pushing groups apart
+       .appbar__sep             thin vertical divider
+     .btn                     toolbar / chrome button (+ .is-active toggles)
+       .btn--primary            accent-filled button
+       .btn--icon               square icon-only button
+     .seg                     segmented toggle group
      .panes                   two-pane body (flex row; stacks when narrow)
        .pane                    one column
        .pane--editor / .pane--preview
-       .pane__label           small heading above a pane (optional)
+       .pane__head              header strip above a pane
+       .pane__title             label text in a pane header
+       .pane__badge             filename / meta pill in a pane header
+     .splitter                draggable divider between panes
      .editor                  the Markdown <textarea>
      .preview                 scroll container for rendered HTML
-       .markdown-body         rendered-HTML wrapper  (styled by github-markdown.css)
+       .markdown-body           rendered-HTML wrapper (styled by github-markdown.css)
      .dropzone                drag-and-drop surface (wraps the editor)
-       .is-dragover           added while a file is dragged over
-       .dropzone__overlay     centered hint shown during drag
+       .is-dragover             added while a file is dragged over
+       .dropzone__overlay       centered hint shown during drag
      .empty-state             shown when there is no content
+     .statusbar               bottom status strip (stats + saved indicator)
    ========================================================================= */
 
 /* ---- Theme tokens ------------------------------------------------------- */
@@ -39,21 +47,30 @@
   color-scheme: light;
 
   --bg: #ffffff;
-  --bg-elevated: #f6f8fa;
-  --bg-inset: #f0f2f5;
-  --fg: #1f2328;
-  --fg-muted: #656d76;
-  --border: #d0d7de;
-  --border-strong: #afb8c1;
-  --accent: #0969da;
+  --bg-elevated: #fbfcfe;
+  --bg-sunken: #f5f7fa;
+  --bg-inset: #eef1f6;
+  --fg: #1a1f2b;
+  --fg-muted: #5c6673;
+  --fg-faint: #8a94a3;
+  --border: #e6e9ef;
+  --border-strong: #d2d8e0;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: #eef0fe;
   --accent-fg: #ffffff;
-  --danger: #cf222e;
-  --focus-ring: #0969da66;
-  --shadow: 0 1px 3px rgba(27, 31, 36, 0.12), 0 1px 2px rgba(27, 31, 36, 0.08);
+  --danger: #dc2626;
+  --focus-ring: rgba(79, 70, 229, 0.35);
 
-  --toolbar-h: 52px;
-  --radius: 6px;
-  --gap: 1px; /* hairline divider between panes */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.14);
+
+  --appbar-h: 56px;
+  --statusbar-h: 30px;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
   --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial,
     sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
@@ -66,16 +83,23 @@
 
   --bg: #0d1117;
   --bg-elevated: #161b22;
-  --bg-inset: #010409;
+  --bg-sunken: #0b0f15;
+  --bg-inset: #1c232c;
   --fg: #e6edf3;
-  --fg-muted: #8b949e;
-  --border: #30363d;
-  --border-strong: #484f58;
-  --accent: #2f81f7;
+  --fg-muted: #9aa6b2;
+  --fg-faint: #6e7781;
+  --border: #272e38;
+  --border-strong: #3a434f;
+  --accent: #7c7bff;
+  --accent-hover: #8f8eff;
+  --accent-soft: #1d2140;
   --accent-fg: #ffffff;
-  --danger: #f85149;
-  --focus-ring: #1f6febcc;
-  --shadow: 0 1px 3px rgba(1, 4, 9, 0.6), 0 1px 2px rgba(1, 4, 9, 0.5);
+  --danger: #f87171;
+  --focus-ring: rgba(124, 123, 255, 0.4);
+
+  --shadow-sm: 0 1px 2px rgba(1, 4, 9, 0.5);
+  --shadow-md: 0 4px 14px rgba(1, 4, 9, 0.5), 0 1px 3px rgba(1, 4, 9, 0.4);
+  --shadow-lg: 0 14px 36px rgba(1, 4, 9, 0.6);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -84,16 +108,23 @@
 
     --bg: #0d1117;
     --bg-elevated: #161b22;
-    --bg-inset: #010409;
+    --bg-sunken: #0b0f15;
+    --bg-inset: #1c232c;
     --fg: #e6edf3;
-    --fg-muted: #8b949e;
-    --border: #30363d;
-    --border-strong: #484f58;
-    --accent: #2f81f7;
+    --fg-muted: #9aa6b2;
+    --fg-faint: #6e7781;
+    --border: #272e38;
+    --border-strong: #3a434f;
+    --accent: #7c7bff;
+    --accent-hover: #8f8eff;
+    --accent-soft: #1d2140;
     --accent-fg: #ffffff;
-    --danger: #f85149;
-    --focus-ring: #1f6febcc;
-    --shadow: 0 1px 3px rgba(1, 4, 9, 0.6), 0 1px 2px rgba(1, 4, 9, 0.5);
+    --danger: #f87171;
+    --focus-ring: rgba(124, 123, 255, 0.4);
+
+    --shadow-sm: 0 1px 2px rgba(1, 4, 9, 0.5);
+    --shadow-md: 0 4px 14px rgba(1, 4, 9, 0.5), 0 1px 3px rgba(1, 4, 9, 0.4);
+    --shadow-lg: 0 14px 36px rgba(1, 4, 9, 0.6);
   }
 }
 
@@ -112,7 +143,7 @@ body,
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--bg-sunken);
   color: var(--fg);
   font-family: var(--font-ui);
   font-size: 14px;
@@ -121,18 +152,28 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Smooth the theme swap without animating first paint. */
 body,
-.toolbar,
+.appbar,
 .editor,
 .preview,
-.pane {
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+.pane,
+.pane__head,
+.statusbar,
+.btn,
+.seg {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
   }
+}
+
+:where(button, a, textarea, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
 /* ---- App shell ---------------------------------------------------------- */
@@ -144,107 +185,261 @@ body,
   overflow: hidden;
 }
 
-/* ---- Toolbar ------------------------------------------------------------ */
-.toolbar {
+/* ---- App bar ------------------------------------------------------------ */
+.appbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex: 0 0 auto;
-  min-height: var(--toolbar-h);
-  padding: 8px 12px;
+  min-height: var(--appbar-h);
+  padding: 0 14px;
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
   flex-wrap: wrap;
 }
 
-.toolbar__group {
-  display: flex;
+.appbar__brand {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  padding-right: 4px;
+  font-weight: 650;
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  user-select: none;
+}
+.appbar__logo {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: var(--accent-fg);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  box-shadow: var(--shadow-sm);
+}
+.appbar__logo svg {
+  width: 17px;
+  height: 17px;
+}
+.appbar__brand .appbar__sub {
+  color: var(--fg-faint);
+  font-weight: 500;
 }
 
-.toolbar__spacer {
+.appbar__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.appbar__spacer {
   flex: 1 1 auto;
 }
 
-.toolbar__btn {
+.appbar__sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 6px 2px;
+  background: var(--border);
+}
+
+/* ---- Buttons ------------------------------------------------------------ */
+.btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 7px;
+  padding: 7px 11px;
   font: inherit;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 550;
   color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
 }
-.toolbar__btn:hover {
+.btn svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+.btn:hover {
   background: var(--bg-inset);
-  border-color: var(--border-strong);
+  color: var(--fg);
 }
-.toolbar__btn:active {
-  transform: translateY(1px);
+.btn:active {
+  transform: translateY(0.5px);
 }
-.toolbar__btn.is-active {
-  color: var(--accent-fg);
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.toolbar__btn:disabled {
-  opacity: 0.5;
+.btn:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-.toolbar__stats {
-  display: flex;
-  gap: 14px;
-  color: var(--fg-muted);
-  font-size: 12.5px;
-  white-space: nowrap;
+.btn--primary {
+  color: var(--accent-fg);
+  background: var(--accent);
+  box-shadow: var(--shadow-sm);
 }
-.toolbar__stats strong {
-  color: var(--fg);
-  font-weight: 600;
+.btn--primary svg {
+  opacity: 1;
+}
+.btn--primary:hover {
+  background: var(--accent-hover);
+  color: var(--accent-fg);
 }
 
-:where(button, a, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  box-shadow: 0 0 0 4px var(--focus-ring);
+.btn.is-active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.btn--icon {
+  padding: 7px;
+  gap: 0;
+}
+
+/* Segmented toggle (theme switch) */
+.seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.seg__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--fg-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.seg__btn svg {
+  width: 15px;
+  height: 15px;
+}
+.seg__btn:hover {
+  color: var(--fg);
+}
+.seg__btn.is-active {
+  color: var(--fg);
+  background: var(--bg);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ---- Two-pane body ------------------------------------------------------ */
 .panes {
   flex: 1 1 auto;
   display: flex;
-  min-height: 0; /* allow children to scroll instead of overflowing */
-  background: var(--border); /* shows through as the hairline divider */
-  gap: var(--gap);
+  min-height: 0;
+  background: var(--bg-sunken);
+  padding: 12px;
+  gap: 0;
 }
 
 .pane {
-  flex: 1 1 50%;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.pane--editor {
+  flex: 1 1 auto;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  border-right: 0;
+}
+.pane--preview {
+  flex: 1 1 auto;
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
 }
 
-.pane__label {
+.pane__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex: 0 0 auto;
-  padding: 4px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
+  padding: 9px 14px;
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
+}
+.pane__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.pane__badge {
+  margin-left: auto;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 550;
+  color: var(--fg-muted);
+  background: var(--bg-inset);
+  border-radius: 999px;
+}
+
+/* ---- Splitter ----------------------------------------------------------- */
+.splitter {
+  flex: 0 0 10px;
+  position: relative;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 5;
+}
+.splitter::before {
+  content: '';
+  position: absolute;
+  inset: 0 4px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background-color 0.12s ease;
+}
+.splitter::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  border-radius: 3px;
+  background: var(--border-strong);
+}
+.splitter:hover::before,
+.splitter.is-dragging::before {
+  background: var(--accent);
+}
+.splitter:hover::after,
+.splitter.is-dragging::after {
+  background: var(--accent-fg);
 }
 
 /* ---- Editor ------------------------------------------------------------- */
@@ -252,14 +447,14 @@ body,
   flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  padding: 16px 20px;
+  padding: 18px 20px;
   border: 0;
   resize: none;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-mono);
   font-size: 13.5px;
-  line-height: 1.6;
+  line-height: 1.7;
   tab-size: 2;
   overflow: auto;
 }
@@ -267,7 +462,7 @@ body,
   outline: none;
 }
 .editor::placeholder {
-  color: var(--fg-muted);
+  color: var(--fg-faint);
 }
 
 /* ---- Preview ------------------------------------------------------------ */
@@ -275,10 +470,9 @@ body,
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  padding: 24px 28px;
+  padding: 28px 32px;
   background: var(--bg);
 }
-/* `.markdown-body` itself is themed in github-markdown.css */
 
 /* ---- Drag-and-drop ------------------------------------------------------ */
 .dropzone {
@@ -294,50 +488,130 @@ body,
 .dropzone__overlay {
   display: none;
   position: absolute;
-  inset: 8px;
+  inset: 10px;
   z-index: 5;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   text-align: center;
   padding: 24px;
   color: var(--accent);
   font-weight: 600;
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
   border: 2px dashed var(--accent);
   border-radius: var(--radius);
   pointer-events: none;
+}
+.dropzone__overlay svg {
+  width: 32px;
+  height: 32px;
 }
 
 /* ---- Empty state -------------------------------------------------------- */
 .empty-state {
   margin: auto;
   max-width: 420px;
-  padding: 40px 24px;
+  padding: 48px 24px;
   text-align: center;
   color: var(--fg-muted);
 }
+.empty-state__icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: var(--radius-lg);
+  color: var(--fg-faint);
+  background: var(--bg-inset);
+}
+.empty-state__icon svg {
+  width: 26px;
+  height: 26px;
+}
 .empty-state h2 {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: 16px;
+  font-weight: 650;
   color: var(--fg);
 }
 .empty-state p {
   margin: 0;
   font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* ---- Status bar --------------------------------------------------------- */
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 0 0 auto;
+  min-height: var(--statusbar-h);
+  padding: 0 16px;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+.statusbar__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.statusbar__stat strong {
+  color: var(--fg);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.statusbar__spacer {
+  flex: 1 1 auto;
+}
+.statusbar__saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-faint);
+}
+.statusbar__saved svg {
+  width: 13px;
+  height: 13px;
 }
 
 /* ---- Responsive: stack panes on narrow screens -------------------------- */
 @media (max-width: 760px) {
   .panes {
     flex-direction: column;
+    padding: 10px;
   }
   .pane {
-    flex: 1 1 50%;
+    flex: 1 1 50% !important;
+    width: auto !important;
   }
-  .toolbar__stats {
-    width: 100%;
-    order: 10;
-    gap: 10px;
+  .pane--editor {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-right: 1px solid var(--border);
+    border-bottom: 0;
+  }
+  .pane--preview {
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+  .splitter {
+    display: none;
+  }
+  .appbar__brand .appbar__sub {
+    display: none;
+  }
+  /* Let the file-action cluster scroll instead of clipping its last button. */
+  .appbar__group {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .appbar__group::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -349,12 +623,16 @@ body,
 }
 .editor::-webkit-scrollbar,
 .preview::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
 }
 .editor::-webkit-scrollbar-thumb,
 .preview::-webkit-scrollbar-thumb {
   background: var(--border-strong);
-  border: 2px solid var(--bg);
-  border-radius: 6px;
+  border: 3px solid var(--bg);
+  border-radius: 8px;
+}
+.editor::-webkit-scrollbar-thumb:hover,
+.preview::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-faint);
 }

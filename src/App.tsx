@@ -1,11 +1,13 @@
 // WP-3 — Layout, state, theme wiring. Pulls together the engine (WP-2),
 // sanitize (WP-6), styling (WP-5) and file I/O / export (WP-4).
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Toolbar from './components/Toolbar';
 import Editor from './components/Editor';
 import Preview from './components/Preview';
 import DropZone from './components/DropZone';
+import Splitter from './components/Splitter';
+import StatusBar from './components/StatusBar';
 import { render } from './lib/markdown';
 import { sanitize } from './lib/sanitize';
 import { getStats } from './lib/stats';
@@ -20,8 +22,10 @@ export default function App() {
   const [theme, setTheme] = useLocalStorage<Theme>('theme', 'light');
   const [showToc, setShowToc] = useLocalStorage<boolean>('showToc', false);
   const [markdown, setMarkdown] = useLocalStorage<string>('markdown', SAMPLE);
+  const [editorPct, setEditorPct] = useLocalStorage<number>('editorPct', 50);
   const [title, setTitle] = useState('document');
 
+  const panesRef = useRef<HTMLElement>(null);
   const debounced = useDebounce(markdown, 180);
 
   // Reflect the theme on <html> so app.css + github-markdown.css respond, and
@@ -67,7 +71,6 @@ export default function App() {
   return (
     <div className="app">
       <Toolbar
-        stats={stats}
         theme={theme}
         showToc={showToc}
         onUpload={loadFile}
@@ -75,21 +78,30 @@ export default function App() {
         onCopyHtml={() => copy(html, 'the HTML')}
         onCopyDoc={() => copy(buildStandaloneHtml(html, { title, theme }), 'the document')}
         onPrint={() => window.print()}
-        onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        onSetTheme={setTheme}
         onToggleToc={() => setShowToc(!showToc)}
       />
-      <main className="panes">
-        <section className="pane pane--editor">
-          <div className="pane__label">Markdown</div>
+      <main className="panes" ref={panesRef}>
+        <section className="pane pane--editor" style={{ flexBasis: `${editorPct}%` }}>
+          <div className="pane__head">
+            <span className="pane__title">Markdown</span>
+            <span className="pane__badge" title={`${title}.md`}>
+              {title}.md
+            </span>
+          </div>
           <DropZone onFile={loadFile} onError={(m) => window.alert(m)}>
             <Editor value={markdown} onChange={setMarkdown} />
           </DropZone>
         </section>
-        <section className="pane pane--preview">
-          <div className="pane__label">Preview</div>
+        <Splitter containerRef={panesRef} value={editorPct} onResize={setEditorPct} />
+        <section className="pane pane--preview" style={{ flexBasis: `${100 - editorPct}%` }}>
+          <div className="pane__head">
+            <span className="pane__title">Preview</span>
+          </div>
           <Preview html={html} />
         </section>
       </main>
+      <StatusBar stats={stats} />
     </div>
   );
 }
